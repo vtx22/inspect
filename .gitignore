@@ -1,0 +1,12 @@
+.vscode/
+imgui.ini
+*.zip
+*.o
+*.a
+*.exe
+
+imgui/
+imgui-sfml/
+implot/
+sfml/
+*.dll
