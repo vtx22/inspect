@@ -36,6 +36,13 @@ int main(int argc, char *argv[])
     ImGui::CreateContext();
     ImPlot::CreateContext();
 
+    sf::Texture texture;
+
+    if (!texture.loadFromFile("spec.png"))
+    {
+    }
+    ImTextureID img_handle = gl_handle_to_imgui_id(texture.getNativeHandle());
+
     sf::Clock deltaClock;
     while (window.isOpen())
     {
@@ -78,6 +85,27 @@ int main(int argc, char *argv[])
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
+        }
+
+        if (ImGui::Begin("Image Feed"))
+        {
+            if (ImPlot::BeginPlot("##", ImVec2(-1, -1), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend | ImPlotFlags_Equal | ImPlotFlags_CanvasOnly))
+            {
+                ImPlotAxisFlags ax_flags = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoGridLines;
+                ImPlot::SetupAxes(0, 0, ax_flags, ax_flags);
+                ImPlot::PlotImage("Spectrum", img_handle, ImPlotPoint(0, 0), ImPlotPoint(1, 1), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
+                ImPlot::EndPlot();
+            }
+            ImGui::End();
+        }
+        if (ImGui::Begin("Spectrum"))
+        {
+            if (ImPlot::BeginPlot("##", ImVec2(-1, -1)))
+            {
+                ImPlot::EndPlot();
+            }
+
+            ImGui::End();
         }
 
         window.clear(sf::Color(20, 20, 20));
