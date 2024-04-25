@@ -20,7 +20,7 @@ int close_app(sf::RenderWindow &window);
 int main(int argc, char *argv[])
 {
 
-    sf::RenderWindow window(sf::VideoMode(1280, 720), std::string("INSPECT - ") + INSPECT_VERSION);
+    sf::RenderWindow window(sf::VideoMode(1280, 720), std::string("inspect | spectroscopy software | ") + INSPECT_VERSION);
 
     window.setFramerateLimit(INSPECT_MAX_FPS);
     window.setVerticalSyncEnabled(INSPECT_VSYNC);
@@ -36,12 +36,20 @@ int main(int argc, char *argv[])
     ImGui::CreateContext();
     ImPlot::CreateContext();
 
+    sf::Image img;
     sf::Texture texture;
 
-    if (!texture.loadFromFile("spec.png"))
+    if (!img.loadFromFile("spec.png"))
     {
     }
+
+    texture.loadFromImage(img);
+    texture.setSmooth(true);
+
     ImTextureID img_handle = gl_handle_to_imgui_id(texture.getNativeHandle());
+
+    std::vector<float> brightness;
+    std::vector<float> x_values;
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -93,7 +101,28 @@ int main(int argc, char *argv[])
             {
                 ImPlotAxisFlags ax_flags = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoGridLines;
                 ImPlot::SetupAxes(0, 0, ax_flags, ax_flags);
-                ImPlot::PlotImage("Spectrum", img_handle, ImPlotPoint(0, 0), ImPlotPoint(1, 1), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
+                ImPlot::PlotImage("Spectrum", img_handle, ImPlotPoint(0, 0), ImPlotPoint(texture.getSize().x, texture.getSize().y), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
+
+                static double drag_tag = texture.getSize().y / 2;
+                ImPlot::DragLineY(0, &drag_tag, ImVec4(1, 0, 0, 1), 1, ImPlotDragToolFlags_NoFit);
+                ImPlot::TagY(drag_tag, ImVec4(1, 0, 0, 1), "");
+
+                uint32_t rounded_row = (uint32_t)round(texture.getSize().y - drag_tag);
+
+                const uint8_t *image_pixels = img.getPixelsPtr();
+                const uint8_t *row = image_pixels + rounded_row * 4;
+
+                brightness.clear();
+                x_values.clear();
+                for (uint32_t px = 0; px < texture.getSize().x; px++)
+                {
+                    sf::Color col = img.getPixel(px, rounded_row);
+                    // uint32_t cur_byte = px * 4;
+                    HSV var = rgbToHsv(col.r, col.g, col.b);
+                    brightness.push_back(var.v);
+                    x_values.push_back(px);
+                }
+
                 ImPlot::EndPlot();
             }
             ImGui::End();
@@ -102,7 +131,10 @@ int main(int argc, char *argv[])
         {
             if (ImPlot::BeginPlot("##", ImVec2(-1, -1)))
             {
+                ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
+                ImPlot::PlotLine("Test", x_values.data(), brightness.data(), brightness.size());
                 ImPlot::EndPlot();
+                ImPlot::PopStyleVar();
             }
 
             ImGui::End();
