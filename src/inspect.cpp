@@ -95,9 +95,10 @@ int main(int argc, char *argv[])
 
             ImGui::EndMainMenuBar();
         }
-        static float alpha = 1;
+        static float alpha = 0.5;
         static bool interpolate = false;
         static bool low_pass = false;
+        static int selector_width = 1;
         if (ImGui::Begin("Spectrum"))
         {
             static float row_ratios[3] = {0.25, 0.05, 0.7};
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
                     ImPlot::PlotImage("Spectrum", img_handle, ImPlotPoint(0, 0), ImPlotPoint(texture.getSize().x, texture.getSize().y), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
 
                     static double drag_tag = texture.getSize().y / 2;
-                    ImPlot::DragLineY(0, &drag_tag, ImVec4(1, 0, 0, 1), 1, ImPlotDragToolFlags_NoFit);
+                    ImPlot::DragLineY(0, &drag_tag, ImVec4(1, 0, 0, 1), selector_width, ImPlotDragToolFlags_NoFit);
                     ImPlot::TagY(drag_tag, ImVec4(1, 0, 0, 1), " ");
 
                     uint32_t rounded_row = (uint32_t)(texture.getSize().y - drag_tag);
@@ -217,13 +218,23 @@ int main(int argc, char *argv[])
                 texture.setSmooth(smooth);
             }
 
+            ImGui::SeparatorText("Data Selection");
+            ImGui::SliderInt("Selector Width", &selector_width, 1, 10);
+
             ImGui::SeparatorText("Data Manipulation");
 
             if (ImGui::Checkbox("Low Pass Filter", &low_pass))
             {
             }
+            if (!low_pass)
+            {
+                ImGui::BeginDisabled();
+            }
             ImGui::SliderFloat("Filter Alpha", &alpha, 0.0001, 1);
-
+            if (!low_pass)
+            {
+                ImGui::EndDisabled();
+            }
             if (ImGui::Checkbox("Interpolate", &interpolate))
             {
             }
