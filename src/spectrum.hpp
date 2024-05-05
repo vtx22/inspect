@@ -9,6 +9,14 @@
 #include <vector>
 #include <cstdint>
 #include <iostream>
+#include <algorithm>
+
+struct hsv_t
+{
+    double h; // Hue
+    double s; // Saturation
+    double v; // Value
+};
 
 struct spec_text_t
 {
@@ -81,6 +89,8 @@ public:
 
     std::vector<float> get_plot_data();
     std::vector<float> get_plot_x();
+
+    static hsv_t rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b);
 
 private:
     std::vector<float> _raw_data;

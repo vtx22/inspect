@@ -62,7 +62,7 @@ void Spectrum::update_raw_data()
         uint8_t r = *(row_start + px * 4);
         uint8_t g = *(row_start + px * 4 + 1);
         uint8_t b = *(row_start + px * 4 + 2);
-        HSV var = rgbToHsv(r, g, b);
+        hsv_t var = rgb_to_hsv(r, g, b);
         _raw_data.push_back(var.v);
         _x_val_pxls.push_back(px);
     }
@@ -187,4 +187,37 @@ void Spectrum::update_interpolation()
 void Spectrum::set_image_preview_smooth(bool smooth)
 {
     _img.texture.setSmooth(smooth);
+}
+
+hsv_t Spectrum::rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
+{
+    // Normalize RGB values
+    double red = r / 255.0;
+    double green = g / 255.0;
+    double blue = b / 255.0;
+
+    // Find maximum and minimum values
+    double maxVal = std::max({red, green, blue});
+    double minVal = std::min({red, green, blue});
+    double delta = maxVal - minVal;
+
+    // Calculate Hue
+    double hue = 0.0;
+    if (delta != 0)
+    {
+        if (maxVal == red)
+            hue = 60 * fmod(((green - blue) / delta), 6);
+        else if (maxVal == green)
+            hue = 60 * (((blue - red) / delta) + 2);
+        else // maxVal == blue
+            hue = 60 * (((red - green) / delta) + 4);
+    }
+
+    // Calculate Saturation
+    double saturation = (maxVal == 0) ? 0 : (delta / maxVal);
+
+    // Value is the maximum of R, G, B
+    double value = maxVal;
+
+    return {hue, saturation, value};
 }
