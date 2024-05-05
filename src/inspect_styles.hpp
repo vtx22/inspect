@@ -10,8 +10,23 @@ enum inspect_style
     ULTRA_DARK,
 };
 
+void default_style()
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+    style = ImGuiStyle();
+    style.FrameRounding = 10;
+    style.GrabRounding = 9;
+    style.AntiAliasedFill = true;
+    style.AntiAliasedLines = true;
+    style.AntiAliasedLinesUseTex = true;
+
+    ImPlotStyle &plot_style = ImPlot::GetStyle();
+    plot_style.LabelPadding = ImVec2(20, 10);
+}
+
 void inspect_ultra_dark_style()
 {
+    default_style();
     // Credit to https://github.com/janekb04
     ImVec4 *colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -93,17 +108,6 @@ void inspect_ultra_dark_style()
     style.GrabRounding = 9;
     style.LogSliderDeadzone = 4;
     style.TabRounding = 4;
-
-    ImPlotStyle &plot_style = ImPlot::GetStyle();
-    plot_style.LabelPadding = ImVec2(20, 10);
-}
-
-void default_style()
-{
-    ImGuiStyle &style = ImGui::GetStyle();
-    style = ImGuiStyle();
-    style.FrameRounding = 10;
-    style.GrabRounding = 9;
 
     ImPlotStyle &plot_style = ImPlot::GetStyle();
     plot_style.LabelPadding = ImVec2(20, 10);
