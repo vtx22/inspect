@@ -54,9 +54,9 @@ int main(int argc, char *argv[])
 
     set_style(ULTRA_DARK);
 
+    bool new_data_loaded = false;
     Spectrum spectrum;
-    spectrum.load_spectrum("hg-crop.jpg");
-    spectrum.update_raw_data();
+    spectrum.load_spectrum("spec2.jpg");
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -90,6 +90,9 @@ int main(int argc, char *argv[])
             {
                 if (ImGui::MenuItem("Open", ""))
                 {
+                    std::string path = open_file_explorer(0);
+                    spectrum.load_spectrum(path.c_str());
+                    new_data_loaded = true;
                 }
 
                 ImGui::EndMenu();
@@ -116,7 +119,7 @@ int main(int argc, char *argv[])
         static double measure_x1 = 10;
         static double measure_x2 = 20;
 
-        std::tuple<float, float> measure_y;
+        std::vector<float> measure_y(2);
 
         static bool measure_markers = false;
 
@@ -157,6 +160,7 @@ int main(int argc, char *argv[])
 
                 if (ImPlot::BeginPlot("##", ImVec2(-1, -1), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend))
                 {
+                    new_data_loaded = false;
                     ImPlot::SetupAxis(ImAxis_Y1, "Relative Brightness");
                     ImPlot::SetupAxis(ImAxis_X1, "Pixel");
                     ImPlot::SetupAxisLimitsConstraints(ImAxis_X1, 0, spectrum.get_image().width() - 1);
@@ -176,7 +180,7 @@ int main(int argc, char *argv[])
                         ImPlot::TagX(measure_x1, ImVec4(1, 1, 1, 1), "X1");
                         ImPlot::TagX(measure_x2, ImVec4(1, 1, 1, 1), "X2");
 
-                        measure_y = spectrum.set_measure_markers(&measure_x1, &measure_x2);
+                        measure_y = spectrum.set_measure_markers({&measure_x1, &measure_x2});
                     }
 
                     ImPlot::EndPlot();
@@ -236,10 +240,12 @@ int main(int argc, char *argv[])
             }
 
             ImGui::Dummy(ImVec2(0.0f, 20.0f));
+            ImGui::BeginDisabled();
             ImGui::SeparatorText("Wavelength Calibration");
             if (ImGui::Checkbox("Show Markers##Calib", &calib_markers))
             {
             }
+            ImGui::EndDisabled();
 
             ImGui::Dummy(ImVec2(0.0f, 20.0f));
             ImGui::SeparatorText("Measure");
@@ -247,8 +253,8 @@ int main(int argc, char *argv[])
             {
             }
 
-            float y1 = std::get<0>(measure_y);
-            float y2 = std::get<1>(measure_y);
+            float y1 = measure_y[0];
+            float y2 = measure_y[1];
 
             ImGui::Text("X1 : %.2f | Y1 : %.3f", measure_x1, y1);
             ImGui::Text("X2 : %.2f | Y2 : %.3f", measure_x2, y2);
