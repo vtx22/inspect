@@ -13,6 +13,8 @@
 #include "implot.h"
 
 #include "inspect_config.h"
+#include "inspect_styles.hpp"
+
 #include "utility.hpp"
 
 #include "spectrum.hpp"
@@ -34,6 +36,8 @@ int main(int argc, char *argv[])
         std::cout << "IMGUI SFML Window Init failed!" << std::endl;
         return -1;
     }
+
+    set_style(ULTRA_DARK);
 
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
@@ -81,12 +85,23 @@ int main(int argc, char *argv[])
                 ImGui::EndMenu();
             }
 
+            if (ImGui::BeginMenu("Style"))
+            {
+                if (ImGui::MenuItem("Default", ""))
+                {
+                    set_style(DEFAULT_STYLE);
+                }
+                if (ImGui::MenuItem("Ultra Dark", ""))
+                {
+                    set_style(ULTRA_DARK);
+                }
+
+                ImGui::EndMenu();
+            }
+
             ImGui::EndMainMenuBar();
         }
 
-        static float alpha = 0.5;
-        static bool interpolate = false;
-        static bool low_pass = false;
         static int selector_width = 1;
 
         if (ImGui::Begin("Spectrum"))
@@ -147,6 +162,11 @@ int main(int argc, char *argv[])
             ImGui::End();
         }
 
+        static float alpha = 0.5;
+        static bool interpolate = false;
+        static bool low_pass = false;
+        static bool calib_markers = false;
+
         if (ImGui::Begin("Toolbar"))
         {
             ImGui::SeparatorText("Image Settings");
@@ -185,6 +205,11 @@ int main(int argc, char *argv[])
             if (ImGui::Checkbox("Interpolate", &interpolate))
             {
                 spectrum.set_interpolation(interpolate);
+            }
+
+            ImGui::SeparatorText("Wavelength Calibration");
+            if (ImGui::Checkbox("Show Markers", &calib_markers))
+            {
             }
 
             ImGui::End();
