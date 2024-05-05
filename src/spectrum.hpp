@@ -86,6 +86,8 @@ public:
     void set_lp_filtering(bool filter);
 
     std::tuple<float, float> set_measure_markers(double *x1, double *x2);
+    float set_measure_marker(double *x);
+
 
     spec_text_t get_image();
     spec_text_t get_line();

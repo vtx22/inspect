@@ -238,15 +238,28 @@ hsv_t Spectrum::rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
 
 std::tuple<float, float> Spectrum::set_measure_markers(double *x1, double *x2)
 {
-    if (*x1 < 0)
+    return {set_measure_marker(x1), set_measure_marker(x2)};
+}
+
+float Spectrum::set_measure_marker(double *x)
+{
+    if (*x < 0)
     {
-        *x1 = 0;
+        *x = 0;
     }
 
-    if (*x2 < 0)
+    size_t max_x = _x_val_pxls.size() - 1;
+
+    if (*x > max_x)
     {
-        *x2 = 0;
+        *x = max_x;
     }
 
-    return {0, 0};
+    int floor_x = *x;
+
+    float lower = _raw_data[floor_x];
+    float upper = _raw_data[floor_x + 1];
+    float delta = upper - lower;
+
+    return lower + (*x - floor_x) * delta;
 }
