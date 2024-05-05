@@ -93,7 +93,6 @@ int main(int argc, char *argv[])
                 {
                     std::string path = open_file_explorer(0);
                     spectrum.load_spectrum(path.c_str());
-                    spectrum.update_raw_data();
                     drag_tag = spectrum.get_image().height() / 2;
                 }
 

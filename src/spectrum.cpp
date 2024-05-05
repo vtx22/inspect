@@ -86,8 +86,16 @@ bool Spectrum::load_spectrum(const char *img_path)
         std::cout << "Could not load spectrum from file!\n";
         return false;
     }
+
+    if (!_img.update_from_image(_raw_image))
+    {
+        std::cout << "Could not create spectrum texture from image!\n";
+        return false;
+    }
+
     update_raw_data();
-    return _img.update_from_image(_raw_image);
+
+    return true;
 }
 
 bool Spectrum::select_line(float y, uint8_t width)
