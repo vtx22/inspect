@@ -13,16 +13,16 @@
 #include "implot.h"
 
 #include "inspect_config.h"
-#include "inspect.hpp"
+#include "utility.hpp"
 
-#include "interpolation.hpp"
+#include "spectrum.hpp"
 
 int close_app(sf::RenderWindow &window);
 
 int main(int argc, char *argv[])
 {
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 16.0;
+    settings.antialiasingLevel = 8.0;
 
     sf::RenderWindow window(sf::VideoMode(1280, 720), std::string("inspect | spectroscopy software | ") + INSPECT_VERSION, sf::Style::Default, settings);
 
@@ -40,21 +40,9 @@ int main(int argc, char *argv[])
     ImGui::CreateContext();
     ImPlot::CreateContext();
 
-    sf::Image img;
-    sf::Texture texture;
-    sf::Texture texture_rgb_line;
-
-    if (!img.loadFromFile("spec2.jpg"))
-    {
-    }
-
-    texture.loadFromImage(img);
-    texture_rgb_line.create(texture.getSize().x, 1);
-
-    ImTextureID img_handle = gl_handle_to_imgui_id(texture.getNativeHandle());
-
-    std::vector<float> brightness, brightness_interp;
-    std::vector<float> x_values, x_values_interp;
+    Spectrum spectrum;
+    spectrum.load_spectrum("spec2.jpg");
+    spectrum.update_raw_data();
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -95,15 +83,18 @@ int main(int argc, char *argv[])
 
             ImGui::EndMainMenuBar();
         }
+
         static float alpha = 0.5;
         static bool interpolate = false;
         static bool low_pass = false;
         static int selector_width = 1;
+
         if (ImGui::Begin("Spectrum"))
         {
             static float row_ratios[3] = {0.25, 0.05, 0.7};
             static double x_min = 0;
-            static double x_max = texture.getSize().x;
+            static double x_max = spectrum.get_image().width();
+            static double drag_tag = spectrum.get_image().height() / 2;
 
             if (ImPlot::BeginSubplots("##", 3, 1, ImVec2(-1, -1), ImPlotSubplotFlags_NoResize | ImPlotFlags_NoFrame, row_ratios))
             {
@@ -111,38 +102,12 @@ int main(int argc, char *argv[])
                 {
                     ImPlotAxisFlags ax_flags = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoGridLines;
                     ImPlot::SetupAxes(0, 0, ax_flags, ax_flags);
-                    ImPlot::PlotImage("Spectrum", img_handle, ImPlotPoint(0, 0), ImPlotPoint(texture.getSize().x, texture.getSize().y), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
+                    ImPlot::PlotImage("Spectrum", spectrum.get_image().handle, ImPlotPoint(0, 0), ImPlotPoint(spectrum.get_image().width(), spectrum.get_image().height()), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
 
-                    static double drag_tag = texture.getSize().y / 2;
                     ImPlot::DragLineY(0, &drag_tag, ImVec4(1, 0, 0, 1), selector_width, ImPlotDragToolFlags_NoFit);
                     ImPlot::TagY(drag_tag, ImVec4(1, 0, 0, 1), " ");
 
-                    uint32_t rounded_row = (uint32_t)(texture.getSize().y - drag_tag);
-
-                    brightness.clear();
-                    x_values.clear();
-
-                    const uint8_t *row_start = img.getPixelsPtr() + rounded_row * 4 * texture.getSize().x;
-                    texture_rgb_line.update(row_start);
-
-                    texture_rgb_line.create(texture.getSize().x, 1);
-                    /*
-                    for (uint8_t i = 0; i < 10; i++)
-                    {
-
-                        texture_rgb_line.update(row_start, texture.getSize().x, 1, 0, i);
-                    }
-                    */
-
-                    for (uint32_t px = 0; px < texture.getSize().x; px++)
-                    {
-                        uint8_t r = *(row_start + px * 4);
-                        uint8_t g = *(row_start + px * 4 + 1);
-                        uint8_t b = *(row_start + px * 4 + 2);
-                        HSV var = rgbToHsv(r, g, b);
-                        brightness.push_back(var.v);
-                        x_values.push_back(px);
-                    }
+                    spectrum.select_line(drag_tag, 1);
 
                     ImPlot::EndPlot();
                 }
@@ -153,51 +118,24 @@ int main(int argc, char *argv[])
                     ImPlot::SetupAxes(0, 0, ax_flags, ax_flags);
                     ImPlot::SetupAxisLinks(ImAxis_X1, &x_min, &x_max);
                     ImPlot::SetupAxisZoomConstraints(ImAxis_Y1, 1, 1);
-                    ImPlot::SetupAxisZoomConstraints(ImAxis_X1, 0, texture.getSize().x);
-                    ImPlot::PlotImage("Spectrum", gl_handle_to_imgui_id(texture_rgb_line.getNativeHandle()), ImPlotPoint(0, 0), ImPlotPoint(texture_rgb_line.getSize().x, texture_rgb_line.getSize().y), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
+                    ImPlot::SetupAxisZoomConstraints(ImAxis_X1, 0, spectrum.get_line().width());
+                    ImPlot::PlotImage("Spectrum", spectrum.get_line().handle, ImPlotPoint(0, 0), ImPlotPoint(spectrum.get_line().width(), spectrum.get_line().height()), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
 
                     ImPlot::EndPlot();
                 }
 
                 if (ImPlot::BeginPlot("##", ImVec2(-1, -1), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend))
                 {
-                    // ImPlot::SetupAxisZoomConstraints(ImAxis_Y1, 0, 1.1);
-                    // ImPlot::SetupAxisZoomConstraints(ImAxis_X1, 0, texture.getSize().x);
-                    ImPlot::SetupAxisLimitsConstraints(ImAxis_X1, 0, texture.getSize().x);
+                    ImPlot::SetupAxis(ImAxis_Y1, "Relative Brightness");
+                    ImPlot::SetupAxis(ImAxis_X1, "Pixel");
+                    ImPlot::SetupAxisLimitsConstraints(ImAxis_X1, 0, spectrum.get_image().width() - 1);
                     ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1, 0, 1.1);
                     ImPlot::SetupAxisZoomConstraints(ImAxis_Y1, 0, 1.1);
                     ImPlot::SetupAxisLinks(ImAxis_X1, &x_min, &x_max);
                     ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
 
-                    x_values.clear();
-                    for (size_t i = 0; i < brightness.size(); i++)
-                    {
-                        x_values.push_back(i);
-                    }
+                    ImPlot::PlotLine("Spectrum Plot", spectrum.get_plot_x().data(), spectrum.get_plot_data().data(), spectrum.get_plot_data().size());
 
-                    if (low_pass)
-                    {
-                        brightness = low_pass_filer(brightness, alpha);
-                    }
-
-                    // Interpolation
-                    if (interpolate)
-                    {
-                        x_values_interp.clear();
-                        brightness_interp = cubic_spline_interpolate(brightness, 10);
-
-                        for (size_t i = 0; i < brightness_interp.size(); i++)
-                        {
-                            x_values_interp.push_back(1 + i * 1.0 / 10);
-                        }
-                        ImPlot::PlotLine("Spectrum Interpolated", x_values_interp.data(), brightness_interp.data(), brightness_interp.size());
-                    }
-                    else
-                    {
-                        ImPlot::PlotLine("Spectrum Plot", x_values.data(), brightness.data(), brightness.size());
-                    }
-
-                    //  ImPlot::PlotLine("Spectrum Reduced", x_values.data(), reduced_brightness_vector.data(), reduced_brightness_vector.size());
                     ImPlot::PopStyleVar();
 
                     ImPlot::EndPlot();
@@ -213,9 +151,9 @@ int main(int argc, char *argv[])
         {
             ImGui::SeparatorText("Image Settings");
             static bool smooth = false;
-            if (ImGui::Checkbox("Smooth Image", &smooth))
+            if (ImGui::Checkbox("Smooth Image (Preview only)", &smooth))
             {
-                texture.setSmooth(smooth);
+                spectrum.set_image_preview_smooth(smooth);
             }
 
             ImGui::SeparatorText("Data Selection");
@@ -225,18 +163,28 @@ int main(int argc, char *argv[])
 
             if (ImGui::Checkbox("Low Pass Filter", &low_pass))
             {
+                spectrum.set_lp_filtering(low_pass);
+                spectrum.update_lp_filter(alpha);
             }
+
             if (!low_pass)
             {
                 ImGui::BeginDisabled();
             }
-            ImGui::SliderFloat("Filter Alpha", &alpha, 0.0001, 1);
+
+            if (ImGui::SliderFloat("Filter Alpha", &alpha, 0.0001, 1))
+            {
+                spectrum.update_lp_filter(alpha);
+            }
+
             if (!low_pass)
             {
                 ImGui::EndDisabled();
             }
+
             if (ImGui::Checkbox("Interpolate", &interpolate))
             {
+                spectrum.set_interpolation(interpolate);
             }
 
             ImGui::End();

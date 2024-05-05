@@ -1,22 +1,11 @@
-#ifndef INSPECT_HPP
-#define INSPECT_HPP
+#include "utility.hpp"
 
-#include "SFML/OpenGL.hpp"
-#include <cstring>
-
-ImTextureID gl_handle_to_imgui_id(GLuint glTextureHandle)
+ImTextureID gl_handle_to_imgui_id(GLuint gl_texture_handle)
 {
     ImTextureID textureID = nullptr;
-    std::memcpy(&textureID, &glTextureHandle, sizeof(GLuint));
+    std::memcpy(&textureID, &gl_texture_handle, sizeof(GLuint));
     return textureID;
 }
-
-struct HSV
-{
-    double h; // Hue
-    double s; // Saturation
-    double v; // Value
-};
 
 HSV rgbToHsv(int r, int g, int b)
 {
@@ -50,5 +39,3 @@ HSV rgbToHsv(int r, int g, int b)
 
     return {hue, saturation, value};
 }
-
-#endif // INSPECT_HPP
