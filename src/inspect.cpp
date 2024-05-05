@@ -37,12 +37,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    set_style(ULTRA_DARK);
-
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     ImGui::CreateContext();
     ImPlot::CreateContext();
+
+    set_style(ULTRA_DARK);
 
     Spectrum spectrum;
     spectrum.load_spectrum("spec2.jpg");
@@ -176,9 +176,11 @@ int main(int argc, char *argv[])
                 spectrum.set_image_preview_smooth(smooth);
             }
 
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
             ImGui::SeparatorText("Data Selection");
             ImGui::SliderInt("Selector Width", &selector_width, 1, 10);
 
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
             ImGui::SeparatorText("Data Manipulation");
 
             if (ImGui::Checkbox("Low Pass Filter", &low_pass))
@@ -207,6 +209,7 @@ int main(int argc, char *argv[])
                 spectrum.set_interpolation(interpolate);
             }
 
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
             ImGui::SeparatorText("Wavelength Calibration");
             if (ImGui::Checkbox("Show Markers", &calib_markers))
             {
