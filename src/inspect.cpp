@@ -54,9 +54,10 @@ int main(int argc, char *argv[])
 
     set_style(ULTRA_DARK);
 
-    bool new_data_loaded = false;
     Spectrum spectrum;
     spectrum.load_spectrum("spec2.jpg");
+
+    static double drag_tag = spectrum.get_image().height() / 2;
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -92,7 +93,8 @@ int main(int argc, char *argv[])
                 {
                     std::string path = open_file_explorer(0);
                     spectrum.load_spectrum(path.c_str());
-                    new_data_loaded = true;
+                    spectrum.update_raw_data();
+                    drag_tag = spectrum.get_image().height() / 2;
                 }
 
                 ImGui::EndMenu();
@@ -128,7 +130,6 @@ int main(int argc, char *argv[])
             static float row_ratios[3] = {0.25, 0.05, 0.7};
             static double x_min = 0;
             static double x_max = spectrum.get_image().width();
-            static double drag_tag = spectrum.get_image().height() / 2;
 
             if (ImPlot::BeginSubplots("##", 3, 1, ImVec2(-1, -1), ImPlotSubplotFlags_NoResize | ImPlotFlags_NoFrame, row_ratios))
             {
@@ -160,7 +161,6 @@ int main(int argc, char *argv[])
 
                 if (ImPlot::BeginPlot("##", ImVec2(-1, -1), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend))
                 {
-                    new_data_loaded = false;
                     ImPlot::SetupAxis(ImAxis_Y1, "Relative Brightness");
                     ImPlot::SetupAxis(ImAxis_X1, "Pixel");
                     ImPlot::SetupAxisLimitsConstraints(ImAxis_X1, 0, spectrum.get_image().width() - 1);
