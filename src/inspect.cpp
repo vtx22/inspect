@@ -57,6 +57,8 @@ int main(int argc, char *argv[])
     Spectrum spectrum;
     spectrum.load_spectrum("spec2.jpg");
 
+    bool data_updated = true;
+
     static double drag_tag = spectrum.get_image().height() / 2;
 
     sf::Clock deltaClock;
@@ -94,6 +96,7 @@ int main(int argc, char *argv[])
                     std::string path = open_file_explorer(0);
                     spectrum.load_spectrum(path.c_str());
                     drag_tag = spectrum.get_image().height() / 2;
+                    data_updated = true;
                 }
 
                 ImGui::EndMenu();
@@ -132,6 +135,10 @@ int main(int argc, char *argv[])
 
             if (ImPlot::BeginSubplots("##", 3, 1, ImVec2(-1, -1), ImPlotSubplotFlags_NoResize | ImPlotFlags_NoFrame, row_ratios))
             {
+                if (data_updated)
+                {
+                    ImPlot::SetNextAxesToFit();
+                }
                 if (ImPlot::BeginPlot("##", ImVec2(-1, -1), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend | ImPlotFlags_Equal | ImPlotFlags_CanvasOnly))
                 {
                     ImPlotAxisFlags ax_flags = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoGridLines;
@@ -156,6 +163,12 @@ int main(int argc, char *argv[])
                     ImPlot::PlotImage("Spectrum", spectrum.get_line().handle, ImPlotPoint(0, 0), ImPlotPoint(spectrum.get_line().width(), spectrum.get_line().height()), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
 
                     ImPlot::EndPlot();
+                }
+
+                if (data_updated)
+                {
+                    ImPlot::SetNextAxesToFit();
+                    data_updated = false;
                 }
 
                 if (ImPlot::BeginPlot("##", ImVec2(-1, -1), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend))
