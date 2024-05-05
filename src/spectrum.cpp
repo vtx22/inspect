@@ -66,6 +66,17 @@ void Spectrum::update_raw_data()
         _raw_data.push_back(var.v);
         _x_val_pxls.push_back(px);
     }
+
+    if (_low_pass_filter)
+    {
+        update_lp_filter(_lp_alpha);
+        return;
+    }
+
+    if (_interpolate)
+    {
+        update_interpolation();
+    }
 }
 
 bool Spectrum::load_spectrum(const char *img_path)
@@ -115,19 +126,21 @@ spec_text_t Spectrum::get_line()
     return _line;
 }
 
-std::vector<float> Spectrum::get_plot_data()
+std::tuple<std::vector<float>, std::vector<float>> Spectrum::get_plot_data()
 {
+    std::vector<float> x = get_plot_x();
+
     if (_interpolate)
     {
-        return _interpolated_data;
+        return {x, _interpolated_data};
     }
 
     if (_low_pass_filter)
     {
-        return _lp_filtered_data;
+        return {x, _lp_filtered_data};
     }
 
-    return _raw_data;
+    return {x, _raw_data};
 }
 
 std::vector<float> Spectrum::get_plot_x()
@@ -157,7 +170,8 @@ void Spectrum::set_lp_filtering(bool filter)
 
 void Spectrum::update_lp_filter(float alpha)
 {
-    _lp_filtered_data = low_pass_filter(_raw_data, alpha);
+    _lp_alpha = alpha;
+    _lp_filtered_data = low_pass_filter(_raw_data, _lp_alpha);
 
     if (_interpolate)
     {
@@ -220,4 +234,19 @@ hsv_t Spectrum::rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
     double value = maxVal;
 
     return {hue, saturation, value};
+}
+
+std::tuple<float, float> Spectrum::set_measure_markers(double *x1, double *x2)
+{
+    if (*x1 < 0)
+    {
+        *x1 = 0;
+    }
+
+    if (*x2 < 0)
+    {
+        *x2 = 0;
+    }
+
+    return {0, 0};
 }

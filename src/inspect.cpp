@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <stdint.h>
+#include <tuple>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
@@ -24,7 +25,7 @@ int close_app(sf::RenderWindow &window);
 int main(int argc, char *argv[])
 {
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 8.0;
+    settings.antialiasingLevel = 16;
 
     sf::RenderWindow window(sf::VideoMode(1280, 720), std::string("inspect | spectroscopy software | ") + INSPECT_VERSION, sf::Style::Default, settings);
 
@@ -54,7 +55,7 @@ int main(int argc, char *argv[])
     set_style(ULTRA_DARK);
 
     Spectrum spectrum;
-    spectrum.load_spectrum("spec2.jpg");
+    spectrum.load_spectrum("hg-crop.jpg");
     spectrum.update_raw_data();
 
     sf::Clock deltaClock;
@@ -87,7 +88,7 @@ int main(int argc, char *argv[])
         {
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::MenuItem("Open", "Ctrl+O"))
+                if (ImGui::MenuItem("Open", ""))
                 {
                 }
 
@@ -112,6 +113,12 @@ int main(int argc, char *argv[])
         }
 
         static int selector_width = 1;
+        static double measure_x1 = 10;
+        static double measure_x2 = 20;
+
+        std::tuple<float, float> measure_y;
+
+        static bool measure_markers = false;
 
         if (ImGui::Begin("Spectrum"))
         {
@@ -129,7 +136,7 @@ int main(int argc, char *argv[])
                     ImPlot::PlotImage("Spectrum", spectrum.get_image().handle, ImPlotPoint(0, 0), ImPlotPoint(spectrum.get_image().width(), spectrum.get_image().height()), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
 
                     ImPlot::DragLineY(0, &drag_tag, ImVec4(1, 0, 0, 1), selector_width, ImPlotDragToolFlags_NoFit);
-                    ImPlot::TagY(drag_tag, ImVec4(1, 0, 0, 1), " ");
+                    // ImPlot::TagY(drag_tag, ImVec4(1, 0, 0, 1), " ");
 
                     spectrum.select_line(drag_tag, 1);
 
@@ -156,11 +163,21 @@ int main(int argc, char *argv[])
                     ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1, 0, 1.1);
                     ImPlot::SetupAxisZoomConstraints(ImAxis_Y1, 0, 1.1);
                     ImPlot::SetupAxisLinks(ImAxis_X1, &x_min, &x_max);
+
                     ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
-
-                    ImPlot::PlotLine("Spectrum Plot", spectrum.get_plot_x().data(), spectrum.get_plot_data().data(), spectrum.get_plot_data().size());
-
+                    auto spectrum_data = spectrum.get_plot_data();
+                    ImPlot::PlotLine("Spectrum Plot", std::get<0>(spectrum_data).data(), std::get<1>(spectrum_data).data(), std::get<0>(spectrum_data).size());
                     ImPlot::PopStyleVar();
+
+                    if (measure_markers)
+                    {
+                        ImPlot::DragLineX(0, &measure_x1, ImVec4(1, 1, 1, 1), 2);
+                        ImPlot::DragLineX(1, &measure_x2, ImVec4(1, 1, 1, 1), 2);
+                        ImPlot::TagX(measure_x1, ImVec4(1, 1, 1, 1), "X1");
+                        ImPlot::TagX(measure_x2, ImVec4(1, 1, 1, 1), "X2");
+
+                        measure_y = spectrum.set_measure_markers(&measure_x1, &measure_x2);
+                    }
 
                     ImPlot::EndPlot();
                 }
@@ -220,9 +237,23 @@ int main(int argc, char *argv[])
 
             ImGui::Dummy(ImVec2(0.0f, 20.0f));
             ImGui::SeparatorText("Wavelength Calibration");
-            if (ImGui::Checkbox("Show Markers", &calib_markers))
+            if (ImGui::Checkbox("Show Markers##Calib", &calib_markers))
             {
             }
+
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
+            ImGui::SeparatorText("Measure");
+            if (ImGui::Checkbox("Show Markers##Measure", &measure_markers))
+            {
+            }
+
+            float y1 = std::get<0>(measure_y);
+            float y2 = std::get<1>(measure_y);
+
+            ImGui::Text("X1 : %.2f | Y1 : %.3f", measure_x1, y1);
+            ImGui::Text("X2 : %.2f | Y2 : %.3f", measure_x2, y2);
+
+            ImGui::Text("dX : %.3f | dY : %.4f", measure_x2 - measure_x1, y2 - y1);
 
             ImGui::End();
         }

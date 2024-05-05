@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <iostream>
 #include <algorithm>
+#include <tuple>
 
 struct hsv_t
 {
@@ -84,10 +85,12 @@ public:
     void set_interpolation(bool interpolate);
     void set_lp_filtering(bool filter);
 
+    std::tuple<float, float> set_measure_markers(double *x1, double *x2);
+
     spec_text_t get_image();
     spec_text_t get_line();
 
-    std::vector<float> get_plot_data();
+    std::tuple<std::vector<float>, std::vector<float>> get_plot_data();
     std::vector<float> get_plot_x();
 
     static hsv_t rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b);
@@ -108,6 +111,7 @@ private:
 
     uint32_t _selected_row = 1;
 
+    float _lp_alpha = 1;
     bool _interpolate = false;
     bool _low_pass_filter = false;
 };
