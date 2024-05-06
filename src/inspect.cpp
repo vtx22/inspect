@@ -176,8 +176,8 @@ int main(int argc, char *argv[])
                     ImPlot::SetupAxis(ImAxis_Y1, "Relative Brightness");
                     ImPlot::SetupAxis(ImAxis_X1, "Pixel");
                     ImPlot::SetupAxisLimitsConstraints(ImAxis_X1, 0, spectrum.get_image().width() - 1);
-                    ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1, 0, 1.1);
-                    ImPlot::SetupAxisZoomConstraints(ImAxis_Y1, 0, 1.1);
+                    ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1, -0.05, 1.1);
+                    ImPlot::SetupAxisZoomConstraints(ImAxis_Y1, -0.05, 1.1);
                     ImPlot::SetupAxisLinks(ImAxis_X1, &x_min, &x_max);
 
                     ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
