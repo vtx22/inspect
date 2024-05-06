@@ -10,8 +10,8 @@ imgui-sfml/
 implot/
 sfml/
 *.dll
-*.png
-*.jpg
-*.jpeg
-*.bmp
+src/*.png
+src/*.jpg
+src/*.jpeg
+src/*.bmp
 *.pdf
