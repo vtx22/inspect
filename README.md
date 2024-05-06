@@ -14,4 +14,4 @@ inspect is spectroscopy software for plotting and measuring spectra using [SFML]
 - Correction for wavelength dependend refraction (ToDo)
 
 ## How to use
-Open ```inspect.exe``` and opne your image file using ```File > Open```. 
+Open ```inspect.exe``` and open your image file using ```File > Open```. 
