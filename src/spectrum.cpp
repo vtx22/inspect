@@ -244,13 +244,13 @@ hsv_t Spectrum::rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
     return {hue, saturation, value};
 }
 
-std::vector<float> Spectrum::set_measure_markers(std::vector<double *> marker_x)
+std::vector<double> Spectrum::set_measure_markers(std::vector<double> &marker_x)
 {
-    std::vector<float> data(marker_x.size());
+    std::vector<double> data(marker_x.size());
 
     for (size_t i = 0; i < data.size(); i++)
     {
-        data[i] = set_measure_marker(marker_x[i]);
+        data[i] = set_measure_marker(&marker_x[i]);
     }
 
     return data;

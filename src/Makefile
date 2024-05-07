@@ -1,5 +1,5 @@
 CCX = g++
-CFLAGS = -Wall
+CFLAGS = -Wall -std=c++23
 
 NAME := inspect
 

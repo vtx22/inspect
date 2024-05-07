@@ -11,6 +11,7 @@
 #include <iostream>
 #include <algorithm>
 #include <tuple>
+#include <ranges>
 
 struct hsv_t
 {
@@ -18,6 +19,12 @@ struct hsv_t
     double s; // Saturation
     double v; // Value
 };
+
+struct point_pair_t
+{
+    std::vector<double> x, y;
+
+} typedef point_pair_t;
 
 struct spec_text_t
 {
@@ -85,7 +92,7 @@ public:
     void set_interpolation(bool interpolate);
     void set_lp_filtering(bool filter);
 
-    std::vector<float> set_measure_markers(std::vector<double *> marker_x);
+    std::vector<double> set_measure_markers(std::vector<double> &marker_x);
     float set_measure_marker(double *x);
 
     spec_text_t get_image();

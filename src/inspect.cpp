@@ -4,6 +4,8 @@
 #include <iostream>
 #include <stdint.h>
 #include <tuple>
+#include <ranges>
+#include <iterator>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
@@ -60,6 +62,7 @@ int main(int argc, char *argv[])
     bool data_updated = true;
 
     static double drag_tag = spectrum.get_image().height() / 2;
+    static point_pair_t measure_points;
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -120,12 +123,8 @@ int main(int argc, char *argv[])
         }
 
         static int selector_width = 1;
-        static double measure_x1 = 10;
-        static double measure_x2 = 20;
 
-        std::vector<float> measure_y(2);
-
-        static bool measure_markers = false;
+        static bool measure_markers = true;
 
         if (ImGui::Begin("Spectrum"))
         {
@@ -133,7 +132,7 @@ int main(int argc, char *argv[])
             static double x_min = 0;
             static double x_max = spectrum.get_image().width();
 
-            if (ImPlot::BeginSubplots("##", 3, 1, ImVec2(-1, -1), ImPlotSubplotFlags_NoResize | ImPlotFlags_NoFrame, row_ratios))
+            if (ImPlot::BeginSubplots("##", 3, 1, ImVec2(-1, -1), ImPlotSubplotFlags_NoResize, row_ratios))
             {
                 if (data_updated)
                 {
@@ -187,12 +186,14 @@ int main(int argc, char *argv[])
 
                     if (measure_markers)
                     {
-                        ImPlot::DragLineX(0, &measure_x1, ImVec4(1, 1, 1, 1), 2);
-                        ImPlot::DragLineX(1, &measure_x2, ImVec4(1, 1, 1, 1), 2);
-                        ImPlot::TagX(measure_x1, ImVec4(1, 1, 1, 1), "X1");
-                        ImPlot::TagX(measure_x2, ImVec4(1, 1, 1, 1), "X2");
+                        for (size_t mp = 0; mp < measure_points.x.size(); mp++)
+                        {
+                            ImPlot::DragLineX(mp, &measure_points.x[mp], ImVec4(1, 1, 1, 1), 2);
+                            std::string marker_name = "X" + std::to_string(mp);
+                            ImPlot::TagX(measure_points.x[mp], ImVec4(1, 1, 1, 1), marker_name.c_str());
+                        }
 
-                        measure_y = spectrum.set_measure_markers({&measure_x1, &measure_x2});
+                        measure_points.y = spectrum.set_measure_markers(measure_points.x);
                     }
 
                     ImPlot::EndPlot();
@@ -265,13 +266,40 @@ int main(int argc, char *argv[])
             {
             }
 
-            float y1 = measure_y[0];
-            float y2 = measure_y[1];
+            ImGui::SameLine();
 
-            ImGui::Text("X1 : %.2f | Y1 : %.3f", measure_x1, y1);
-            ImGui::Text("X2 : %.2f | Y2 : %.3f", measure_x2, y2);
+            if (ImGui::Button("Add"))
+            {
+                measure_points.x.push_back(0);
+                measure_points.y.push_back(0);
+            }
 
-            ImGui::Text("dX : %.3f | dY : %.4f", measure_x2 - measure_x1, y2 - y1);
+            ImGui::SameLine();
+
+            if (ImGui::Button("Clear All"))
+            {
+                measure_points.x.clear();
+                measure_points.y.clear();
+            }
+
+            std::vector<size_t> to_delete;
+            for (size_t mp = 0; mp < measure_points.x.size(); mp++)
+            {
+                ImGui::Text("M%lld : ", mp);
+                ImGui::SameLine();
+
+                ImGui::Text("X : %.2f | Y : %.3f", measure_points.x[mp], measure_points.y[mp]);
+
+                ImGui::SameLine();
+                std::string button_name = "Delete##" + std::to_string(mp);
+                if (ImGui::Button(button_name.c_str()))
+                {
+                    to_delete.push_back(mp);
+                }
+            }
+
+            delete_at_indices(measure_points.x, to_delete);
+            delete_at_indices(measure_points.y, to_delete);
 
             ImGui::End();
         }
