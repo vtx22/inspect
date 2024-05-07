@@ -27,7 +27,7 @@ int close_app(sf::RenderWindow &window);
 int main(int argc, char *argv[])
 {
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 16;
+    settings.antialiasingLevel = INSPECT_ANTIALIASING_LEVEL;
 
     sf::RenderWindow window(sf::VideoMode(1280, 720), std::string("inspect | spectroscopy software | ") + INSPECT_VERSION, sf::Style::Default, settings);
 
