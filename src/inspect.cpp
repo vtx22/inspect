@@ -212,95 +212,100 @@ int main(int argc, char *argv[])
 
         if (ImGui::Begin("Toolbar"))
         {
-            ImGui::SeparatorText("Image Settings");
-            static bool smooth = false;
-            if (ImGui::Checkbox("Smooth Image (Preview only)", &smooth))
+            if (ImGui::CollapsingHeader("Image Settings"))
             {
-                spectrum.set_image_preview_smooth(smooth);
-            }
-
-            ImGui::Dummy(ImVec2(0.0f, 20.0f));
-            ImGui::SeparatorText("Data Selection");
-            ImGui::SliderInt("Selector Width", &selector_width, 1, 10);
-
-            ImGui::Dummy(ImVec2(0.0f, 20.0f));
-            ImGui::SeparatorText("Data Manipulation");
-
-            if (ImGui::Checkbox("Low Pass Filter", &low_pass))
-            {
-                spectrum.set_lp_filtering(low_pass);
-                spectrum.update_lp_filter(alpha);
-            }
-
-            if (!low_pass)
-            {
-                ImGui::BeginDisabled();
-            }
-
-            if (ImGui::SliderFloat("Filter Alpha", &alpha, 0.0001, 1))
-            {
-                spectrum.update_lp_filter(alpha);
-            }
-
-            if (!low_pass)
-            {
-                ImGui::EndDisabled();
-            }
-
-            if (ImGui::Checkbox("Interpolate", &interpolate))
-            {
-                spectrum.set_interpolation(interpolate);
-            }
-
-            ImGui::Dummy(ImVec2(0.0f, 20.0f));
-            ImGui::BeginDisabled();
-            ImGui::SeparatorText("Wavelength Calibration");
-            if (ImGui::Checkbox("Show Markers##Calib", &calib_markers))
-            {
-            }
-            ImGui::EndDisabled();
-
-            ImGui::Dummy(ImVec2(0.0f, 20.0f));
-            ImGui::SeparatorText("Measure");
-            if (ImGui::Checkbox("Show Markers##Measure", &measure_markers))
-            {
-            }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Add"))
-            {
-                measure_points.x.push_back(0);
-                measure_points.y.push_back(0);
-            }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Clear All"))
-            {
-                measure_points.x.clear();
-                measure_points.y.clear();
-            }
-
-            std::vector<size_t> to_delete;
-            for (size_t mp = 0; mp < measure_points.x.size(); mp++)
-            {
-                ImGui::Text("M%lld : ", mp);
-                ImGui::SameLine();
-
-                ImGui::Text("X : %.2f | Y : %.3f", measure_points.x[mp], measure_points.y[mp]);
-
-                ImGui::SameLine();
-                std::string button_name = "Delete##" + std::to_string(mp);
-                if (ImGui::Button(button_name.c_str()))
+                static bool smooth = false;
+                if (ImGui::Checkbox("Smooth Image (Preview only)", &smooth))
                 {
-                    to_delete.push_back(mp);
+                    spectrum.set_image_preview_smooth(smooth);
                 }
             }
 
-            delete_at_indices(measure_points.x, to_delete);
-            delete_at_indices(measure_points.y, to_delete);
+            if (ImGui::CollapsingHeader("Data Selection"))
+            {
+                ImGui::SliderInt("Selector Width", &selector_width, 1, 10);
+            }
 
+            if (ImGui::CollapsingHeader("Data Manipulation"))
+            {
+
+                if (ImGui::Checkbox("Low Pass Filter", &low_pass))
+                {
+                    spectrum.set_lp_filtering(low_pass);
+                    spectrum.update_lp_filter(alpha);
+                }
+
+                if (!low_pass)
+                {
+                    ImGui::BeginDisabled();
+                }
+
+                if (ImGui::SliderFloat("Filter Alpha", &alpha, 0.0001, 1))
+                {
+                    spectrum.update_lp_filter(alpha);
+                }
+
+                if (!low_pass)
+                {
+                    ImGui::EndDisabled();
+                }
+
+                if (ImGui::Checkbox("Interpolate", &interpolate))
+                {
+                    spectrum.set_interpolation(interpolate);
+                }
+            }
+
+            if (ImGui::CollapsingHeader("Wavelength Calibration"))
+            {
+                ImGui::BeginDisabled();
+                if (ImGui::Checkbox("Show Markers##Calib", &calib_markers))
+                {
+                }
+                ImGui::EndDisabled();
+            }
+
+            if (ImGui::CollapsingHeader("Measure"))
+            {
+                if (ImGui::Checkbox("Show Markers##Measure", &measure_markers))
+                {
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Add"))
+                {
+                    measure_points.x.push_back(0);
+                    measure_points.y.push_back(0);
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Clear All"))
+                {
+                    measure_points.x.clear();
+                    measure_points.y.clear();
+                }
+
+                std::vector<size_t> to_delete;
+                for (size_t mp = 0; mp < measure_points.x.size(); mp++)
+                {
+                    ImGui::Text("M%lld : ", mp);
+                    ImGui::SameLine();
+
+                    ImGui::Text("X : %.2f | Y : %.3f", measure_points.x[mp], measure_points.y[mp]);
+
+                    ImGui::SameLine();
+                    std::string button_name = "Delete##" + std::to_string(mp);
+                    if (ImGui::Button(button_name.c_str()))
+                    {
+                        to_delete.push_back(mp);
+                    }
+                }
+
+                delete_at_indices(measure_points.x, to_delete);
+                delete_at_indices(measure_points.y, to_delete);
+            }
             ImGui::End();
         }
 
