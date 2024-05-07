@@ -22,6 +22,7 @@ void default_style()
 
     ImPlotStyle &plot_style = ImPlot::GetStyle();
     plot_style.LabelPadding = ImVec2(20, 10);
+    plot_style.Colormap = ImPlotColormap_Plasma;
 }
 
 void inspect_ultra_dark_style()
@@ -108,9 +109,6 @@ void inspect_ultra_dark_style()
     style.GrabRounding = 9;
     style.LogSliderDeadzone = 4;
     style.TabRounding = 4;
-
-    ImPlotStyle &plot_style = ImPlot::GetStyle();
-    plot_style.LabelPadding = ImVec2(20, 10);
 }
 
 void set_style(inspect_style style)
