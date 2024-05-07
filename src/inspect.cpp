@@ -288,19 +288,43 @@ int main(int argc, char *argv[])
                 }
 
                 std::vector<size_t> to_delete;
-                for (size_t mp = 0; mp < measure_points.x.size(); mp++)
+
+                if (!measure_markers)
                 {
-                    ImGui::Text("M%lld : ", mp);
-                    ImGui::SameLine();
+                    ImGui::BeginDisabled();
+                }
 
-                    ImGui::Text("X : %.2f | Y : %.3f", measure_points.x[mp], measure_points.y[mp]);
+                if (ImGui::BeginTable("##MeasureMarkerTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+                {
 
-                    ImGui::SameLine();
-                    std::string button_name = "Delete##" + std::to_string(mp);
-                    if (ImGui::Button(button_name.c_str()))
+                    ImGui::TableSetupColumn("Name");
+                    ImGui::TableSetupColumn("Pixel");
+                    ImGui::TableSetupColumn("Brightness");
+                    ImGui::TableSetupColumn("##", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableHeadersRow();
+
+                    for (size_t mp = 0; mp < measure_points.x.size(); mp++)
                     {
-                        to_delete.push_back(mp);
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("M%lld", mp);
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.2f", measure_points.x[mp]);
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::Text("%.3f", measure_points.y[mp]);
+                        ImGui::TableSetColumnIndex(3);
+                        std::string button_name = "Delete##" + std::to_string(mp);
+                        if (ImGui::Button(button_name.c_str()))
+                        {
+                            to_delete.push_back(mp);
+                        }
                     }
+                    ImGui::EndTable();
+                }
+
+                if (!measure_markers)
+                {
+                    ImGui::EndDisabled();
                 }
 
                 delete_at_indices(measure_points.x, to_delete);
