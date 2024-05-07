@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
 
     static double drag_tag = spectrum.get_image().height() / 2;
     static point_pair_t measure_points;
+    static point_pair_t calibration_points = {{0, 0}, {100, 100}};
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -125,6 +126,7 @@ int main(int argc, char *argv[])
         static int selector_width = 1;
 
         static bool measure_markers = true;
+        static bool calib_markers = false;
 
         if (ImGui::Begin("Spectrum"))
         {
@@ -145,8 +147,6 @@ int main(int argc, char *argv[])
                     ImPlot::PlotImage("Spectrum", spectrum.get_image().handle, ImPlotPoint(0, 0), ImPlotPoint(spectrum.get_image().width(), spectrum.get_image().height()), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
 
                     ImPlot::DragLineY(0, &drag_tag, ImVec4(1, 0, 0, 1), selector_width, ImPlotDragToolFlags_NoFit);
-                    // ImPlot::TagY(drag_tag, ImVec4(1, 0, 0, 1), " ");
-
                     spectrum.select_line(drag_tag, 1);
 
                     ImPlot::EndPlot();
@@ -180,9 +180,14 @@ int main(int argc, char *argv[])
                     ImPlot::SetupAxisLinks(ImAxis_X1, &x_min, &x_max);
 
                     ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
+                    ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
+                    
+                    ImPlot::PushStyleColor(0, ImPlot::GetColormapColor(3));
                     auto spectrum_data = spectrum.get_plot_data();
                     ImPlot::PlotLine("Spectrum Plot", std::get<0>(spectrum_data).data(), std::get<1>(spectrum_data).data(), std::get<0>(spectrum_data).size());
-                    ImPlot::PopStyleVar();
+                    ImPlot::PlotShaded("Spectrum Plot##Shade", std::get<0>(spectrum_data).data(), std::get<1>(spectrum_data).data(), std::get<0>(spectrum_data).size());
+                    ImPlot::PopStyleColor();
+                    ImPlot::PopStyleVar(2);
 
                     if (measure_markers)
                     {
@@ -194,6 +199,16 @@ int main(int argc, char *argv[])
                         }
 
                         measure_points.y = spectrum.set_measure_markers(measure_points.x);
+                    }
+
+                    if (calib_markers)
+                    {
+                        for (size_t mp = 0; mp < calibration_points.x.size(); mp++)
+                        {
+                            ImPlot::DragLineX(mp, &calibration_points.x[mp], ImVec4(1, 0, 0, 1), 2);
+                        }
+
+                        spectrum.set_measure_markers(calibration_points.x);
                     }
 
                     ImPlot::EndPlot();
@@ -208,7 +223,6 @@ int main(int argc, char *argv[])
         static float alpha = 0.5;
         static bool interpolate = false;
         static bool low_pass = false;
-        static bool calib_markers = false;
 
         if (ImGui::Begin("Toolbar"))
         {
@@ -258,17 +272,78 @@ int main(int argc, char *argv[])
 
             if (ImGui::CollapsingHeader("Wavelength Calibration"))
             {
-                ImGui::BeginDisabled();
                 if (ImGui::Checkbox("Show Markers##Calib", &calib_markers))
                 {
+                    if (calib_markers)
+                    {
+                        measure_markers = false;
+                    }
                 }
-                ImGui::EndDisabled();
+
+                std::vector<size_t> to_delete;
+
+                if (!calib_markers)
+                {
+                    ImGui::BeginDisabled();
+                }
+
+                if (ImGui::BeginTable("##CalibMarkerTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+                {
+
+                    ImGui::TableSetupColumn("Pixel");
+                    ImGui::TableSetupColumn("Wavelength [nm]");
+                    // ImGui::TableSetupColumn("##Delete", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableHeadersRow();
+
+                    for (size_t mp = 0; mp < calibration_points.x.size(); mp++)
+                    {
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("%.2f", calibration_points.x[mp]);
+                        ImGui::TableSetColumnIndex(1);
+                        std::string name = "##" + std::to_string(mp);
+                        ImGui::InputDouble(name.c_str(), &calibration_points.y[mp], 0.0f, 0.0f, "%.1f");
+                    }
+
+                    ImGui::EndTable();
+                }
+
+                if (ImPlot::BeginPlot("##", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend | ImPlotFlags_CanvasOnly | ImPlotFlags_NoInputs))
+                {
+                    ImPlotAxisFlags ax_flags = ImPlotAxisFlags_AutoFit;
+                    ImPlot::SetupAxes("Pixel", "Wavelength [nm]", ax_flags, ax_flags);
+                    ImPlot::SetupAxisLimitsConstraints(ImAxis_X1, 0, spectrum.get_image().width() - 1);
+                    ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
+                    // ImPlot::SetupAxisZoomConstraints(ImAxis_X1, spectrum.get_image().width(), spectrum.get_image().width());
+
+                    double m = (calibration_points.y[1] - calibration_points.y[0]) / (calibration_points.x[1] - calibration_points.x[0]);
+                    double b = calibration_points.y[0] - m * calibration_points.x[0];
+
+                    double x[2] = {0, spectrum.get_image().width() - 1};
+                    double y[2] = {b, m * x[1] + b};
+
+                    ImPlot::PushStyleColor(0, ImPlot::GetColormapColor(3));
+                    ImPlot::PlotLine("CalibCurve", x, y, 2);
+                    ImPlot::PopStyleColor();
+                    ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6, ImPlot::GetColormapColor(ImPlot::GetColormapSize() - 1));
+                    ImPlot::PlotScatter("CalibPoints", calibration_points.x.data(), calibration_points.y.data(), 2);
+                    ImPlot::EndPlot();
+                }
+
+                if (!calib_markers)
+                {
+                    ImGui::EndDisabled();
+                }
             }
 
             if (ImGui::CollapsingHeader("Measure"))
             {
                 if (ImGui::Checkbox("Show Markers##Measure", &measure_markers))
                 {
+                    if (measure_markers)
+                    {
+                        calib_markers = false;
+                    }
                 }
 
                 ImGui::SameLine();
