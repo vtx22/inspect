@@ -57,7 +57,10 @@ int main(int argc, char *argv[])
     set_style(ULTRA_DARK);
 
     Spectrum spectrum;
-    spectrum.load_spectrum("spec2.jpg");
+    if (!spectrum.load_spectrum("spec2.jpg"))
+    {
+        std::cout << "Failed to load default image!\n";
+    }
 
     bool data_updated = true;
 
@@ -181,7 +184,7 @@ int main(int argc, char *argv[])
 
                     ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
                     ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
-                    
+
                     ImPlot::PushStyleColor(0, ImPlot::GetColormapColor(3));
                     auto spectrum_data = spectrum.get_plot_data();
                     ImPlot::PlotLine("Spectrum Plot", std::get<0>(spectrum_data).data(), std::get<1>(spectrum_data).data(), std::get<0>(spectrum_data).size());
@@ -194,7 +197,7 @@ int main(int argc, char *argv[])
                         for (size_t mp = 0; mp < measure_points.x.size(); mp++)
                         {
                             ImPlot::DragLineX(mp, &measure_points.x[mp], ImVec4(1, 1, 1, 1), 2);
-                            std::string marker_name = "X" + std::to_string(mp);
+                            std::string marker_name = "M" + std::to_string(mp);
                             ImPlot::TagX(measure_points.x[mp], ImVec4(1, 1, 1, 1), marker_name.c_str());
                         }
 
@@ -205,7 +208,7 @@ int main(int argc, char *argv[])
                     {
                         for (size_t mp = 0; mp < calibration_points.x.size(); mp++)
                         {
-                            ImPlot::DragLineX(mp, &calibration_points.x[mp], ImVec4(1, 0, 0, 1), 2);
+                            ImPlot::DragLineX(mp, &calibration_points.x[mp], ImPlot::GetColormapColor(ImPlot::GetColormapSize() - 1), 2);
                         }
 
                         spectrum.set_measure_markers(calibration_points.x);
@@ -299,7 +302,7 @@ int main(int argc, char *argv[])
                     {
                         ImGui::TableNextRow();
                         ImGui::TableSetColumnIndex(0);
-                        ImGui::Text("%.2f", calibration_points.x[mp]);
+                        ImGui::Text("%.1f", calibration_points.x[mp]);
                         ImGui::TableSetColumnIndex(1);
                         std::string name = "##" + std::to_string(mp);
                         ImGui::InputDouble(name.c_str(), &calibration_points.y[mp], 0.0f, 0.0f, "%.1f");
