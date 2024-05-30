@@ -31,7 +31,7 @@ struct spec_text_t
     sf::Texture texture;
     ImTextureID handle;
 
-    ImTextureID get_handle()
+    ImTextureID get_handle() const
     {
         return gl_handle_to_imgui_id(texture.getNativeHandle());
     }
@@ -53,17 +53,17 @@ struct spec_text_t
         return true;
     }
 
-    sf::Vector2u size()
+    sf::Vector2u size() const
     {
         return texture.getSize();
     }
 
-    uint32_t width()
+    uint32_t width() const
     {
         return size().x;
     }
 
-    uint32_t height()
+    uint32_t height() const
     {
         return size().y;
     }

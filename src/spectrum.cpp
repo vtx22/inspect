@@ -2,6 +2,7 @@
 
 Spectrum::Spectrum()
 {
+    _img.texture.create(0, 0);
 }
 
 Spectrum::~Spectrum()
