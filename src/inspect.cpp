@@ -6,6 +6,7 @@
 #include <tuple>
 #include <ranges>
 #include <iterator>
+#include <windows.h>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
@@ -33,6 +34,8 @@ int main(int argc, char *argv[])
 
     window.setFramerateLimit(INSPECT_MAX_FPS);
     window.setVerticalSyncEnabled(INSPECT_VSYNC);
+
+    ::ShowWindow(window.getSystemHandle(), SW_MAXIMIZE);
 
     if (!ImGui::SFML::Init(window))
     {
@@ -182,14 +185,18 @@ int main(int argc, char *argv[])
                     ImPlot::SetupAxisZoomConstraints(ImAxis_Y1, -0.05, 1.1);
                     ImPlot::SetupAxisLinks(ImAxis_X1, &x_min, &x_max);
 
-                    ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 4);
+                    ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 3);
                     ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
+                    ImPlot::PushStyleColor(ImPlotCol_Fill, ImPlot::GetColormapColor(3));
+                    ImPlot::PushStyleColor(ImPlotCol_Line, ImPlot::GetColormapColor(3));
+                    ImPlot::PushStyleColor(ImPlotCol_PlotBg, {0, 0, 0, 1});
 
-                    ImPlot::PushStyleColor(0, ImPlot::GetColormapColor(3));
                     auto spectrum_data = spectrum.get_plot_data();
+
                     ImPlot::PlotLine("Spectrum Plot", std::get<0>(spectrum_data).data(), std::get<1>(spectrum_data).data(), std::get<0>(spectrum_data).size());
                     ImPlot::PlotShaded("Spectrum Plot##Shade", std::get<0>(spectrum_data).data(), std::get<1>(spectrum_data).data(), std::get<0>(spectrum_data).size());
-                    ImPlot::PopStyleColor();
+
+                    ImPlot::PopStyleColor(3);
                     ImPlot::PopStyleVar(2);
 
                     if (measure_markers)
@@ -374,7 +381,6 @@ int main(int argc, char *argv[])
 
                 if (ImGui::BeginTable("##MeasureMarkerTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
                 {
-
                     ImGui::TableSetupColumn("Name");
                     ImGui::TableSetupColumn("Pixel");
                     ImGui::TableSetupColumn("Brightness");
