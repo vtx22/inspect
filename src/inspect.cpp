@@ -7,6 +7,7 @@
 #include <ranges>
 #include <iterator>
 #include <windows.h>
+#include <dwmapi.h>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
@@ -35,7 +36,9 @@ int main(int argc, char *argv[])
     window.setFramerateLimit(INSPECT_MAX_FPS);
     window.setVerticalSyncEnabled(INSPECT_VSYNC);
 
-    ::ShowWindow(window.getSystemHandle(), SW_MAXIMIZE);
+    BOOL USE_DARK_MODE = true;
+    DwmSetWindowAttribute(window.getSystemHandle(), DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &USE_DARK_MODE, sizeof(USE_DARK_MODE));
+    ShowWindow(window.getSystemHandle(), SW_MAXIMIZE);
 
     if (!ImGui::SFML::Init(window))
     {
